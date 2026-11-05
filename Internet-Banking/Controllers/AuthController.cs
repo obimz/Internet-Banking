@@ -14,13 +14,13 @@ namespace Internet_Banking.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : Controller
+public class AuthController : ControllerBase
 {
     private readonly Internet_BankingDbContext _context; //Dependency injection of the database context to access the database
     private readonly IPasswordHasher<Customer> _passwordHasher;//Dependency injection of the password hasher to hash and verify passwords
 
     private readonly IConfiguration _configuration;
-
+    
     public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration)
     {
         _context = context;
@@ -104,16 +104,71 @@ public class AuthController : Controller
 
     [HttpPost("change-password")]
     [Authorize]
-    public IActionResult ChangePassword(ChangePasswordRequest request)
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
     {
-        return Ok();
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest("Current password and new password are required.");
+        }
+
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized();
+        }
+
+        var customer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Id == customerId);
+
+        if (customer is null)
+        {
+            return NotFound();
+        }
+
+        var verifyResult = _passwordHasher.VerifyHashedPassword(
+            customer,
+            customer.PasswordHash,
+            request.CurrentPassword);
+
+        if (verifyResult == PasswordVerificationResult.Failed)
+        {
+            return BadRequest("Current password is incorrect.");
+        }
+
+        customer.PasswordHash = _passwordHasher.HashPassword(customer, request.NewPassword);
+
+        await _context.SaveChangesAsync();
+
+        return Ok("Password changed successfully.");
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
-        return Ok();
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized();
+        }
+
+        var customer = await _context.Customers
+            .FirstOrDefaultAsync(c => c.Id == customerId);
+
+        if (customer is null)
+        {
+            return NotFound();
+        }
+
+        //JWT access tokens are stateless, meaning they don't require server-side storage.
+        //Therefore, logging out is typically handled on the client side by removing the token from local storage or cookies.
+        return Ok(new
+        {
+            message = "Logged out successfully."
+        });
     }
 
 

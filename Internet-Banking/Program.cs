@@ -43,7 +43,8 @@ builder.Services
             ClockSkew = TimeSpan.FromMinutes(1) // to account for any clock differences between the server and the client
         };
     });
-builder.Services.AddAuthentication();
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
