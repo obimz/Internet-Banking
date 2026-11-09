@@ -17,7 +17,7 @@ public class CustomerController : ControllerBase
         _context = context;
     }
 
-    [HttpGet("GetCustomerAccount")]
+    [HttpGet("get-customer-details")]
     [Authorize]
     public async Task<IActionResult> GetCustomerAccount()
     {
@@ -40,7 +40,7 @@ public class CustomerController : ControllerBase
         return Ok(customer);
     }
 
-    [HttpPut("UpdateCustomerAccount")]
+    [HttpPut("update-customer-details")]
     [Authorize]
     public async Task<IActionResult> UpdateCustomerAccount(
         UpdateCustomerRequest request)
