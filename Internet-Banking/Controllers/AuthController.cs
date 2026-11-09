@@ -20,7 +20,7 @@ public class AuthController : ControllerBase
     private readonly IPasswordHasher<Customer> _passwordHasher;//Dependency injection of the password hasher to hash and verify passwords
 
     private readonly IConfiguration _configuration;
-    
+     
     public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration)
     {
         _context = context;
