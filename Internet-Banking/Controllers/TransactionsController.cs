@@ -207,23 +207,52 @@ public class TransactionsController : ControllerBase
         });
     }
 
-    //[HttpPost("view-transactions")]
-    //public async Task<IActionResult> ViewTransactions(Guid id)
-    //{
-    //    var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //    if (!Guid.TryParse(customerIdValue, out var customerId))
-    //    {
-    //        return Unauthorized();
-    //    }
+    [HttpGet("view-transactions/{accountId:guid}")]
+    public async Task<IActionResult> ViewTransactions(Guid accountId)
+    {
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized();
+        }
 
-    //    var accounts = await _context.BankAccounts.FirstOrDefaultAsync(a => a.CustomerId == customerId && a.Id == id);
+        var ownsaccount = await _context.BankAccounts.AnyAsync(a => a.CustomerId == customerId && a.Id == accountId);//checks if the account belongs to the customer
 
-    //    if (accounts is null)
-    //        return NotFound("Account not found.");
+        if (!ownsaccount)
+            return NotFound("Account not found.");
 
-    //    return Ok(accounts.)
+        var transactions = await _context.Transactions
+            .Where(t => t.SourceAccountId == accountId || t.DestinationAccountId == accountId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+        
+        return Ok(transactions);
 
-    //}
+    }
+
+    [HttpGet("view-details/{transactionId:guid}")]//view details of a specific transaction by its ID
+    public async Task<IActionResult> ViewTransactionDetails(Guid transactionId)
+    {
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized();
+        }
+
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.Id == transactionId);
+
+        if (transaction is null)
+            return NotFound("Transaction not found.");
+
+        var ownAccount = await _context.BankAccounts
+            .AnyAsync(a => a.CustomerId == customerId && (a.Id == transaction.SourceAccountId || a.Id == transaction.DestinationAccountId));
+
+        if (!ownAccount)
+            return Forbid("You do not have permission to view this transaction. Check your account ownership.");
+
+        return Ok(transaction);
+    }
 
 
     private static string GenerateTransactionReference()

@@ -65,9 +65,9 @@ public class AccountsController : ControllerBase
         });
     }
 
-    [HttpGet("account-details/{id}")]
+    [HttpGet("account-details/{accountId:guid}")]
     [Authorize]
-    public async Task<IActionResult> GetAccountDetails(Guid id)
+    public async Task<IActionResult> GetAccountDetails(Guid accountId)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
         
@@ -78,7 +78,7 @@ public class AccountsController : ControllerBase
 
         var account = await _context.BankAccounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id && a.CustomerId == customerId);
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.CustomerId == customerId);
 
         if (account is null)
             return NotFound("Account not found.");
@@ -95,9 +95,9 @@ public class AccountsController : ControllerBase
         });
     }
 
-    [HttpGet("account-balance/{id}")]
+    [HttpGet("account-balance/{accountId:guid}")]
     [Authorize]
-    public async Task<IActionResult> GetAccountBalance(Guid id)
+    public async Task<IActionResult> GetAccountBalance(Guid accountId)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(customerIdValue, out var customerId))
@@ -107,7 +107,7 @@ public class AccountsController : ControllerBase
         
         var account = await _context.BankAccounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id && a.CustomerId == customerId);
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.CustomerId == customerId);
 
         if (account is null)
             return NotFound("Account not found.");
