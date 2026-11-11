@@ -1,15 +1,17 @@
-using System.Text;
 using Internet_Banking.Data;
+using Internet_Banking.Extensions;
+using Internet_Banking.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Internet_Banking.Models;
 using Scalar.AspNetCore;
+using System.Text;
 using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -57,6 +59,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    await app.SeedDatabaseAsync();
 }
 
 app.UseHttpsRedirection();

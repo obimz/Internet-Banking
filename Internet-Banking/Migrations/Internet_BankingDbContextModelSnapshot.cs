@@ -120,13 +120,13 @@ namespace Internet_Banking.Migrations
                     b.Property<Guid?>("SourceAccountId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("TransactionReference")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TransactionStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TransactionType")
                         .IsRequired()

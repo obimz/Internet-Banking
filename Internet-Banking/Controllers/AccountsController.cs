@@ -147,6 +147,13 @@ public class AccountsController : ControllerBase
         return Ok(account);
     }
 
+    [HttpGet]
+    [Authorize]
+    //public async Task<IActionResult> GetAllAccounts()
+    //{
+        
+    //}
+
     private async Task<string> GenerateUniqueAccountNumberAsync()
     {
         while (true)
