@@ -10,7 +10,7 @@ namespace Internet_Banking.Controllers;
 
 [ApiController]
 [Route("api/accounts")]
-public class AccountsController : Controller
+public class AccountsController : ControllerBase
 {
     private readonly Internet_BankingDbContext _context;
 
@@ -19,9 +19,9 @@ public class AccountsController : Controller
         _context = context;
     }
 
-    [HttpPost("OpenAccount")]
+    [HttpPost("create-account")]
     [Authorize]
-    public async Task<IActionResult> OpenAccount(OpenAccountRequest request)
+    public async Task<IActionResult> CreateAccount(OpenAccountRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -51,7 +51,7 @@ public class AccountsController : Controller
         };
 
         _context.BankAccounts.Add(account);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();//saves to the database
 
         return Created($"/api/accounts/{account.Id}", new
         {
@@ -65,6 +65,87 @@ public class AccountsController : Controller
         });
     }
 
+    [HttpGet("account-details/{accountId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetAccountDetails(Guid accountId)
+    {
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized("Invalid customer ID.");
+        }
+
+        var account = await _context.BankAccounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.CustomerId == customerId);
+
+        if (account is null)
+            return NotFound("Account not found.");
+
+        return Ok(new
+        {
+            account.Id,
+            account.AccountNumber,
+            account.AccountType,
+            account.Currency,
+            account.Balance,
+            account.Status,
+            account.CreatedAt
+        });
+    }
+
+    [HttpGet("account-balance/{accountId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetAccountBalance(Guid accountId)
+    {
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized("Invalid customer ID.");
+        }
+        
+        var account = await _context.BankAccounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.CustomerId == customerId);
+
+        if (account is null)
+            return NotFound("Account not found.");
+
+        return Ok(new
+        {
+            account.Id,
+            account.Balance
+        });
+    }
+
+    [HttpGet("my-accounts")]
+    [Authorize]
+    public async Task<IActionResult> GetCustomerAccounts()
+    {
+        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(customerIdValue, out var customerId))
+        {
+            return Unauthorized("Invalid customer ID.");
+        }
+
+        var account = await _context.BankAccounts
+            .AsNoTracking()
+            .Where(a => a.CustomerId == customerId)
+            .Select(a => new
+            {
+                a.Id,
+                a.AccountNumber,
+                a.AccountType,
+                a.Currency,
+                a.Balance,
+                a.Status,
+                a.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(account);
+    }
 
     private async Task<string> GenerateUniqueAccountNumberAsync()
     {

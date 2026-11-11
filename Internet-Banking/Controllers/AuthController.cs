@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Created(
-            $"api/customer/{customer.Id}",
+            $"api/customers/{customer.Id}",
             new
             {
                 customer.Id,
