@@ -1,5 +1,6 @@
 ﻿using Internet_Banking.Data;
 using Internet_Banking.Data.DataSeeders;
+using Microsoft.EntityFrameworkCore;
 
 namespace Internet_Banking.Extensions;
 
@@ -11,14 +12,19 @@ public static class SeederExtension
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<Internet_BankingDbContext>();
 
-        // Executes the seeders in the correct order to ensure that foreign key constraints are satisfied
-        var customerSeeder = new CustomerSeeder();
-        await customerSeeder.SeedAsync(context);
+        context.Database.SetCommandTimeout(300);//Increases the SQL timeout to 5mins for heavy seading
 
-        var bankAccountSeeder = new BankAccountSeeder();
-        await bankAccountSeeder.SeedAsync(context);
+        // Group all seeders using the ISeeder contract in the exact order they must run
+        ISeeder[] seeders =
+        [
+            new CustomerSeeder(),
+            new BankAccountSeeder(),
+            new TransactionSeeder()
+        ];
 
-        var transactionSeeder = new TransactionSeeder();
-        await transactionSeeder.SeedAsync(context);
+        foreach (var seeder in seeders)
+        {
+            await seeder.SeedAsync(context);
+        }
     }
 }

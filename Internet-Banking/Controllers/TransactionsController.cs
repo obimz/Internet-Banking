@@ -35,10 +35,26 @@ public class TransactionsController : ControllerBase
         {
             return NotFound("Account not found.");
         }
-        account.Balance += request.Amount;
-        await _context.SaveChangesAsync();
 
         var transactionReference = GenerateTransactionReference();
+
+        var transaction = new Transaction
+        {
+            TransactionReference = transactionReference,
+            TransactionType = TransactionType.Deposit,
+            SourceAccountId = null,
+            DestinationAccountId = account.Id,
+            Amount = request.Amount,
+            TransactionStatus = TransactionStatus.Successful,
+            Narration = "External account deposit"
+        };
+
+        account.Balance += request.Amount;
+
+        _context.Transactions.Add(transaction);
+
+        await _context.SaveChangesAsync();
+
         return Ok(new
         {
             transactionReference,
@@ -68,11 +84,26 @@ public class TransactionsController : ControllerBase
             return BadRequest("Insufficient funds.");
         }
 
+        var transactionReference = GenerateTransactionReference();
+
+        var transaction = new Transaction
+        {
+            TransactionReference = transactionReference,
+            TransactionType = TransactionType.Withdrawal,
+            SourceAccountId = account.Id,
+            DestinationAccountId = null,
+            Amount = request.Amount,
+            TransactionStatus = TransactionStatus.Successful,
+            Narration = "External account withdrawal"
+        };
+
         account.Balance -= request.Amount;
+
+        _context.Transactions.Add(transaction);
 
         await _context.SaveChangesAsync();
 
-        var transactionReference = GenerateTransactionReference();
+    
         return Ok(new
         {
             transactionReference,
@@ -134,6 +165,19 @@ public class TransactionsController : ControllerBase
 
         var transactionReference = GenerateTransactionReference();
 
+        var transaction = new Transaction
+        {
+            TransactionReference = transactionReference,
+            TransactionType = TransactionType.InternalTransfer,
+            SourceAccountId = sourceAccount.Id,
+            DestinationAccountId = destinationAccount.Id,
+            Amount = request.Amount,
+            TransactionStatus = TransactionStatus.Successful,
+            Narration = request.Narration ?? "Internal transfer"
+        };
+
+        _context.Transactions.Add(transaction);
+
         await _context.SaveChangesAsync();
         await dbTransaction.CommitAsync();
 
@@ -187,6 +231,19 @@ public class TransactionsController : ControllerBase
         // Simulated transfer reference and success response
         var transactionReference = GenerateTransactionReference();
         var providerReference = $"SIM-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(1000, 9999)}";
+
+        var transaction = new Transaction
+        {
+            TransactionReference = transactionReference,
+            TransactionType = TransactionType.DomesticTransfer,
+            SourceAccountId = sourceAccount.Id,
+            DestinationAccountId = null, // Since it's an external transfer, we don't have a destination account in our system
+            Amount = request.Amount,
+            TransactionStatus = TransactionStatus.Successful,
+            Narration = request.Narration ?? "Domestic transfer"
+        };
+
+        _context.Transactions.Add(transaction);
 
         await _context.SaveChangesAsync();
         await dbTransaction.CommitAsync();
@@ -257,7 +314,7 @@ public class TransactionsController : ControllerBase
 
     private static string GenerateTransactionReference()
     {
-        return $"TRX-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N[..8].ToUpperInvariant()}";
+        return $"TRX-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
     }
 }
 
