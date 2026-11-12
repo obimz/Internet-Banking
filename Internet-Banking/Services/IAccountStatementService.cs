@@ -1,7 +1,7 @@
 ﻿using Internet_Banking.DTOs;
 using Internet_Banking.DTOs.Trasactions;
 
-namespace Internet_Banking.Service;
+namespace Internet_Banking.Services;
 
 public interface IAccountStatementService
 {

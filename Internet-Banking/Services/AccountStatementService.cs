@@ -1,7 +1,6 @@
 ﻿using Internet_Banking.Data;
 using Internet_Banking.DTOs;
 using Internet_Banking.DTOs.Trasactions;
-using Internet_Banking.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace Internet_Banking.Services;
@@ -44,6 +43,7 @@ public class AccountStatementService : IAccountStatementService
             }
         }
 
+        //Sums the total credits and debits for the account based on the filtered transactions
         var totalCredits = await query
             .Where(t => t.DestinationAccountId == accountId)
             .SumAsync(t => t.Amount);
@@ -52,9 +52,10 @@ public class AccountStatementService : IAccountStatementService
             .Where(t => t.SourceAccountId == accountId)
             .SumAsync(t => t.Amount);
 
+
         var transactions = await query
             .OrderByDescending(t => t.CreatedAt)
-            .Select(t => new TransactionStatementItemDto
+            .Select(t => new TransactionStatementItemDto//formats the transaction data into the DTO for the response
             {
                 TransactionReference = t.TransactionReference,
                 Amount = t.Amount,
