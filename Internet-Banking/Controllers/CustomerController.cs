@@ -17,9 +17,9 @@ public class CustomerController : ControllerBase
         _context = context;
     }
 
-    [HttpGet("me")]
+    [HttpGet("get-customer-details")]
     [Authorize]
-    public async Task<IActionResult> GetProfile()
+    public async Task<IActionResult> GetCustomerAccount()
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -40,9 +40,9 @@ public class CustomerController : ControllerBase
         return Ok(customer);
     }
 
-    [HttpPut("me")]
+    [HttpPut("update-customer-details")]
     [Authorize]
-    public async Task<IActionResult> UpdateProfile(
+    public async Task<IActionResult> UpdateCustomerAccount(
         UpdateCustomerRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
