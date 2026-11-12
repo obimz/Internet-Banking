@@ -5,6 +5,8 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Internet_Banking.Models;
 using Microsoft.AspNetCore.Authorization;
+using Internet_Banking.Services;
+using Internet_Banking.DTOs.Trasactions;
 
 namespace Internet_Banking.Controllers;
 
@@ -13,10 +15,12 @@ namespace Internet_Banking.Controllers;
 public class AccountsController : ControllerBase
 {
     private readonly Internet_BankingDbContext _context;
+    private readonly IAccountStatementService _accountStatementService;
 
-    public AccountsController(Internet_BankingDbContext context)
+    public AccountsController(Internet_BankingDbContext context, IAccountStatementService accountStatementService)
     {
         _context = context;
+        _accountStatementService = accountStatementService;
     }
 
     [HttpPost("create-account")]
@@ -145,6 +149,14 @@ public class AccountsController : ControllerBase
             .ToListAsync();
 
         return Ok(account);
+    }
+
+    [HttpGet("account-statement/{accountId:guid}")]
+    [Authorize]
+    public async Task<IActionResult> GetAccountStatement(Guid accountId, [FromQuery] AccountStatementFilterDto filter)
+    {
+        var statement = await _accountStatementService.GetAccountStatementAsync(accountId, filter);
+        return Ok(statement);
     }
 
     private async Task<string> GenerateUniqueAccountNumberAsync()

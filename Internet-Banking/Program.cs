@@ -1,15 +1,18 @@
-using System.Text;
 using Internet_Banking.Data;
+using Internet_Banking.Extensions;
+using Internet_Banking.Models;
+using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Internet_Banking.Models;
 using Scalar.AspNetCore;
+using System.Text;
 using System.Text.Json.Serialization;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -24,6 +27,8 @@ builder.Services.AddDbContext<Internet_BankingDbContext>(option =>
 option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IPasswordHasher<Customer>, PasswordHasher<Customer>>();
+
+builder.Services.AddScoped<IAccountStatementService, AccountStatementService>();//Registers the AccountStatementService with the dependency injection container.
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is not configured.");
@@ -57,6 +62,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    await app.SeedDatabaseAsync();
 }
 
 app.UseHttpsRedirection();

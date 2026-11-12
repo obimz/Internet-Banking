@@ -52,6 +52,10 @@ namespace Internet_Banking.Data
                 .HasConversion<string>();
 
             modelBuilder.Entity<Transaction>()
+                .Property(t => t.TransactionStatus)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Transaction>()
                 .HasOne(t => t.SourceAccount)
                 .WithMany()
                 .HasForeignKey(t => t.SourceAccountId)

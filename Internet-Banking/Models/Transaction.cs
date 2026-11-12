@@ -16,7 +16,7 @@ public class Transaction
 
     public decimal Amount { get; set; }
 
-    public string Status { get; set; } = "Successful";
+    public TransactionStatus TransactionStatus { get; set; } 
 
     public string? Narration { get; set; }
 
