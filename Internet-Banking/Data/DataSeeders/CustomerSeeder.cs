@@ -27,6 +27,10 @@ public class CustomerSeeder : ISeeder
             .RuleFor(c => c.CreatedAt, f => f.Date.Past(1));
 
         var customers = customerFaker.Generate(1000);
+        customers[0].FullName = "System Admin";
+        customers[0].Email = "admin@internetbanking.com";
+        customers[0].Role = "Admin";
+
         await context.Customers.AddRangeAsync(customers);
         await context.SaveChangesAsync();
 

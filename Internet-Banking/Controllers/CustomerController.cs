@@ -19,26 +19,28 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("all-customer-details")]
-    [AllowAnonymous]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> GetAllCustomers()
     {
-        var cutomers = await _context.Customers
+        var customers = await _context.Customers
             .AsNoTracking()
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new
             {
+                c.Id,
                 c.FullName,
                 c.Email,
                 c.PhoneNumber,
+                c.Role,
                 c.CreatedAt
             })
             .ToListAsync();
 
-        return Ok(cutomers);
+        return Ok(customers);
     }
 
     [HttpGet("specific-customer-details/{customerId:guid}")]
-    //[Authorize]
+    [Authorize]
     public async Task<IActionResult> GetCustomerAccount(Guid customerId)
     {
         var loggedInUserIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -48,7 +50,8 @@ public class CustomerController : ControllerBase
             return Unauthorized();
         }
 
-        if(loggedInUserId != customerId)
+        // [FIX 3]: Allow access if the user owns this profile OR is an Admin
+        if (loggedInUserId != customerId && !User.IsInRole("Admin"))
         {
             return Forbid();
         }
@@ -84,7 +87,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpPut("update-specific-customer-details/{customerId:guid}")]
-    //[Authorize]
+    [Authorize]
     public async Task<IActionResult> UpdateCustomerAccount(
         Guid customerId, UpdateCustomerRequest request)
     {
@@ -95,17 +98,25 @@ public class CustomerController : ControllerBase
             return Unauthorized();
         }
 
-        if (loggedInUserId != customerId)
+        if (loggedInUserId != customerId && !User.IsInRole("Admin"))
         {
             return Forbid();
         }
 
         var customer = await _context.Customers
-            .FirstOrDefaultAsync(customer => customer.Id == customerId);
+            .FirstOrDefaultAsync(c => c.Id == customerId);
 
         if (customer is null)
         {
             return NotFound();
+        }
+
+        var emailTaken = await _context.Customers
+            .AnyAsync(c => c.Email == request.Email && c.Id != customerId);
+
+        if (emailTaken)
+        {
+            return BadRequest("Email is already in use by another account.");
         }
 
         customer.FullName = request.FullName;
@@ -113,10 +124,11 @@ public class CustomerController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new Customer
+        return Ok(new
         {
-            FullName = customer.FullName,
-            Email = customer.Email
+            customer.Id,
+            customer.FullName,
+            customer.Email
         });
     }
 }

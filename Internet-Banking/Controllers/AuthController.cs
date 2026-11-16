@@ -1,13 +1,10 @@
 ﻿using Internet_Banking.Data;
-using Internet_Banking.DTOs.Accounts;
 using Internet_Banking.Models;
 using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
@@ -21,16 +18,19 @@ public class AuthController : ControllerBase
     private readonly Internet_BankingDbContext _context; //Dependency injection of the database context to access the database
     private readonly IPasswordHasher<Customer> _passwordHasher;//Dependency injection of the password hasher to hash and verify passwords
 
+    private readonly ITokenService _tokenService;
+
     private readonly IConfiguration _configuration;
 
     private readonly IAccountService _accountService;
 
-    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration, IAccountService accountService)
+    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration, IAccountService accountService, ITokenService tokenService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _configuration = configuration;
         _accountService = accountService;
+        _tokenService = tokenService;
     }
 
     [HttpPost("register")]
@@ -110,12 +110,10 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid password.");
         }
 
-        var token = CreateToken(customer);
+        var token = _tokenService.CreateToken(customer);
 
-        return Ok(new
-        {
-            token
-        });
+        return Ok(new 
+        { Token = token });
     }
 
     [HttpPost("change-password")]
@@ -187,57 +185,6 @@ public class AuthController : ControllerBase
         });
     }
 
-
-
-
-private string CreateToken(Customer customer)
-    {
-        var key = _configuration["Jwt:Key"]
-            ?? throw new InvalidOperationException(
-                "JWT signing key is not configured.");
-
-        var issuer = _configuration["Jwt:Issuer"]
-            ?? throw new InvalidOperationException(
-                "JWT issuer is not configured.");
-
-        var audience = _configuration["Jwt:Audience"]
-            ?? throw new InvalidOperationException(
-                "JWT audience is not configured.");
-
-        var expiresInMinutes =
-            _configuration.GetValue<int>("Jwt:ExpiresInMinutes", 60);
-
-        var claims = new[]
-        {
-        new Claim(
-            ClaimTypes.NameIdentifier,
-            customer.Id.ToString()),
-
-        new Claim(
-            ClaimTypes.Email,
-            customer.Email),
-
-        new Claim(
-            ClaimTypes.Name,
-            customer.FullName)
-        };
-
-        var signingKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(key));
-
-        var credentials = new SigningCredentials(
-            signingKey,
-            SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token); //converts the JWT token to a string representation that can be sent to the client
-    }
 }
 
 public record RegisterRequest(

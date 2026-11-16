@@ -39,6 +39,10 @@ namespace Internet_Banking.Data
                 .WithOne(account => account.Customer) //Each account belongs to only one customer
                 .HasForeignKey(account => account.CustomerId);
 
+            modelBuilder.Entity<Customer>()
+                .Property(c => c.Role)
+                .HasDefaultValue("Customer"); // Set default value for Role property
+
             modelBuilder.Entity<Transaction>()
                 .Property(t => t.Amount)
                 .HasPrecision(18, 2);
