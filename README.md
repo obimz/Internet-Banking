@@ -9,6 +9,7 @@ An ASP.NET Core Web API for an internet banking application.
 - Entity Framework Core
 - SQL Server
 - JWT bearer authentication
+- Bogus
 
 ## Current phase
 
@@ -31,7 +32,14 @@ Internet-Banking/
 │   ├── AuthController.cs
 │   └── CustomerController.cs
 ├── Data/
+│   ├── DataSeeders/
+│   │   |── CustomerSeeder.cs
+|	|	|── BankAccountSeeder.cs
+|	|   |── ISeeder.cs
+|	|	└── TransactionSeeder.cs
 │   └── Internet_BankingDbContext.cs
+|──- Services/
+
 ├── Models/
 │   ├── AccountStatus.cs
 │   ├── AccountType.cs

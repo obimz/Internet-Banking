@@ -68,6 +68,40 @@ namespace Internet_Banking.Migrations
                     b.ToTable("BankAccounts");
                 });
 
+            modelBuilder.Entity("Internet_Banking.Models.Beneficiary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nickname")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId", "AccountNumber")
+                        .IsUnique();
+
+                    b.ToTable("Beneficiaries");
+                });
+
             modelBuilder.Entity("Internet_Banking.Models.Customer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -95,7 +129,9 @@ namespace Internet_Banking.Migrations
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(max)")
+                        .HasDefaultValue("Customer");
 
                     b.HasKey("Id");
 
@@ -159,6 +195,17 @@ namespace Internet_Banking.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("Internet_Banking.Models.Beneficiary", b =>
+                {
+                    b.HasOne("Internet_Banking.Models.Customer", "Customer")
+                        .WithMany("Beneficiaries")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
             modelBuilder.Entity("Internet_Banking.Models.Transaction", b =>
                 {
                     b.HasOne("Internet_Banking.Models.BankAccount", "DestinationAccount")
@@ -179,6 +226,8 @@ namespace Internet_Banking.Migrations
             modelBuilder.Entity("Internet_Banking.Models.Customer", b =>
                 {
                     b.Navigation("BankAccounts");
+
+                    b.Navigation("Beneficiaries");
                 });
 #pragma warning restore 612, 618
         }
