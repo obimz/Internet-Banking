@@ -103,8 +103,7 @@ public class CustomerController : ControllerBase
             return Forbid();
         }
 
-        var customer = await _context.Customers
-            .FirstOrDefaultAsync(c => c.Id == customerId);
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == customerId);
 
         if (customer is null)
         {
@@ -126,7 +125,6 @@ public class CustomerController : ControllerBase
 
         return Ok(new
         {
-            customer.Id,
             customer.FullName,
             customer.Email
         });
