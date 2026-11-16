@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -30,6 +31,10 @@ builder.Services.AddScoped<IPasswordHasher<Customer>, PasswordHasher<Customer>>(
 
 builder.Services.AddScoped<IAccountStatementService, AccountStatementService>();//Registers the AccountStatementService with the dependency injection container.
 
+builder.Services.AddScoped<IAccountService, AccountService>();
+
+builder.Services.AddScoped<ITokenService, TokenService>();
+
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is not configured.");
 
@@ -49,11 +54,14 @@ builder.Services
             ValidAudience = builder.Configuration["Jwt:Audience"],
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1) // to account for any clock differences between the server and the client
+            ClockSkew = TimeSpan.FromMinutes(1), // to account for any clock differences between the server and the client
+
+            RoleClaimType = ClaimTypes.Role // tells JWT middleware which claim holds for user's role
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));//registers the adminOnly policy
 
 var app = builder.Build();
 
@@ -67,8 +75,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseAuthentication();//reads and validates the Jwt tokens
+
+app.UseAuthorization();//checks the adminOnly policy
 
 app.MapControllers();
 
