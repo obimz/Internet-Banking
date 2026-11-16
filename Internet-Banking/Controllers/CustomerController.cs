@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Internet_Banking.Data;
+using Internet_Banking.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,20 +18,62 @@ public class CustomerController : ControllerBase
         _context = context;
     }
 
-    [HttpGet("get-customer-details")]
-    [Authorize]
-    public async Task<IActionResult> GetCustomerAccount()
+    [HttpGet("all-customer-details")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAllCustomers()
     {
-        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var cutomers = await _context.Customers
+            .AsNoTracking()
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.FullName,
+                c.Email,
+                c.PhoneNumber,
+                c.CreatedAt
+            })
+            .ToListAsync();
 
-        if (!Guid.TryParse(customerIdValue, out var customerId))
+        return Ok(cutomers);
+    }
+
+    [HttpGet("specific-customer-details/{customerId:guid}")]
+    //[Authorize]
+    public async Task<IActionResult> GetCustomerAccount(Guid customerId)
+    {
+        var loggedInUserIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(loggedInUserIdValue, out var loggedInUserId))
         {
             return Unauthorized();
         }
 
+        if(loggedInUserId != customerId)
+        {
+            return Forbid();
+        }
+
         var customer = await _context.Customers
             .AsNoTracking()
-            .FirstOrDefaultAsync(customer => customer.Id == customerId);
+            .Where(c => c.Id == customerId)
+            .Select(c => new
+            {
+                c.FullName,
+                c.Email,
+                c.PhoneNumber,
+                c.CreatedAt,
+                Account = c.BankAccounts.Select(a => new
+                {
+                    a.AccountNumber,
+                    a.AccountType,
+                    a.Currency,
+                    a.Balance,
+                    a.Status,
+                    a.DailyTransferLimit,
+                    a.CreatedAt
+                })
+            })
+            .FirstOrDefaultAsync();
 
         if (customer is null)
         {
@@ -40,16 +83,21 @@ public class CustomerController : ControllerBase
         return Ok(customer);
     }
 
-    [HttpPut("update-customer-details")]
-    [Authorize]
+    [HttpPut("update-specific-customer-details/{customerId:guid}")]
+    //[Authorize]
     public async Task<IActionResult> UpdateCustomerAccount(
-        UpdateCustomerRequest request)
+        Guid customerId, UpdateCustomerRequest request)
     {
-        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var loggedInUserIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (!Guid.TryParse(customerIdValue, out var customerId))
+        if (!Guid.TryParse(loggedInUserIdValue, out var loggedInUserId))
         {
             return Unauthorized();
+        }
+
+        if (loggedInUserId != customerId)
+        {
+            return Forbid();
         }
 
         var customer = await _context.Customers
@@ -65,7 +113,11 @@ public class CustomerController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(customer);
+        return Ok(new Customer
+        {
+            FullName = customer.FullName,
+            Email = customer.Email
+        });
     }
 }
 

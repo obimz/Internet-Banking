@@ -1,5 +1,7 @@
 ﻿using Internet_Banking.Data;
+using Internet_Banking.DTOs.Accounts;
 using Internet_Banking.Models;
+using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,12 +22,15 @@ public class AuthController : ControllerBase
     private readonly IPasswordHasher<Customer> _passwordHasher;//Dependency injection of the password hasher to hash and verify passwords
 
     private readonly IConfiguration _configuration;
-     
-    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration)
+
+    private readonly IAccountService _accountService;
+
+    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration, IAccountService accountService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
         _configuration = configuration;
+        _accountService = accountService;
     }
 
     [HttpPost("register")]
@@ -56,17 +61,28 @@ public class AuthController : ControllerBase
         };
 
         customer.PasswordHash = _passwordHasher.HashPassword(customer, request.Password); //Hashes the passworde
+
         _context.Customers.Add(customer);
+
+        var account = await _accountService.CreateAccountAsync(
+            customer.Id,
+            request.AccountType,
+            0m // Initial deposit is set to 0
+        );
+
+
 
         await _context.SaveChangesAsync();
 
         return Created(
-            $"api/customers/{customer.Id}",
+            $"api/customers/specific-customer-details/{customer.Id}",
             new
             {
-                customer.Id,
                 customer.FullName,
-                customer.Email
+                customer.Email,
+                AccountNumber = account.AccountNumber,
+                AccountType = account.AccountType,
+                Balance = account.Balance,
             });
     }
 
@@ -228,7 +244,8 @@ public record RegisterRequest(
     string FullName,
     string Email,
     string PhoneNumber,
-    string Password);
+    string Password,
+    AccountType AccountType);
 
 public record LoginRequest(
     string Email,

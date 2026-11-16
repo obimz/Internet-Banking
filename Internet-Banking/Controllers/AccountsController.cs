@@ -23,51 +23,28 @@ public class AccountsController : ControllerBase
         _accountStatementService = accountStatementService;
     }
 
-    [HttpPost("create-account")]
-    [Authorize]
-    public async Task<IActionResult> CreateAccount(OpenAccountRequest request)
-    {
-        var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    //private async Task<BankAccount> CreateInitialAccountAsync(Guid customerId,  OpenAccountRequest request)
+    //{
+        
+    //    var accountNumber = await GenerateUniqueAccountNumberAsync();
 
-        if (!Guid.TryParse(customerIdValue, out var customerId))
-        {
-            return Unauthorized("Invalid customer ID.");
-        }
+    //    var account = new BankAccount
+    //    {
+    //        Id = Guid.NewGuid(),
+    //        CustomerId = customerId,
+    //        AccountType = request.AccountType,
+    //        Currency = "NGN",
+    //        Balance = request.InitialDeposit,
+    //        Status = AccountStatus.Active,
+    //        AccountNumber = accountNumber,
+    //        DailyTransferLimit = 200000m,
+    //        CreatedAt = DateTime.UtcNow
+    //    };
 
-        var customerExists = await _context.Customers.AnyAsync(c => c.Id == customerId);
+    //    _context.BankAccounts.Add(account);//Added to EF Core's change tracker.
 
-        if (!customerExists)
-        {
-            return NotFound("Customer not found.");
-        }
-
-        var accountNumber = await GenerateUniqueAccountNumberAsync();
-
-        var account = new BankAccount
-        {
-            CustomerId = customerId,
-            AccountType = request.AccountType,
-            Currency = "NGN",
-            Balance = request.InitialDeposit,
-            Status = AccountStatus.Active,
-            AccountNumber = accountNumber,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.BankAccounts.Add(account);
-        await _context.SaveChangesAsync();//saves to the database
-
-        return Created($"/api/accounts/{account.Id}", new
-        {
-            account.Id,
-            account.AccountNumber,
-            account.AccountType,
-            account.Currency,
-            account.Balance,
-            account.Status,
-            account.CreatedAt
-        });
-    }
+    //    return account;
+    //}
 
     [HttpGet("account-details/{accountId:guid}")]
     [Authorize]
@@ -159,19 +136,19 @@ public class AccountsController : ControllerBase
         return Ok(statement);
     }
 
-    private async Task<string> GenerateUniqueAccountNumberAsync()
-    {
-        while (true)
-        {
-            var accountNumber = Random.Shared.NextInt64(1000000000, 9999999999).ToString();
+    //private async Task<string> GenerateUniqueAccountNumberAsync()
+    //{
+    //    while (true)
+    //    {
+    //        var accountNumber = Random.Shared.NextInt64(1000000000, 9999999999).ToString();
 
-            var exists = await _context.BankAccounts
-                .AnyAsync(a => a.AccountNumber == accountNumber);
+    //        var exists = await _context.BankAccounts
+    //            .AnyAsync(a => a.AccountNumber == accountNumber);
 
-            if (!exists)
-            {
-                return accountNumber;
-            }
-        }
-    }
+    //        if (!exists)
+    //        {
+    //            return accountNumber;
+    //        }
+    //    }
+    //}
 }

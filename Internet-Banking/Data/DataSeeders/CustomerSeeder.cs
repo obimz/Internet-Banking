@@ -9,10 +9,10 @@ public class CustomerSeeder : ISeeder
 {
     public async Task SeedAsync(Internet_BankingDbContext context)
     {
-        //if (await context.Customers.AnyAsync())
-        //{
-        //    return; // Exit if customers already exist
-        //}
+        if (await context.Customers.AnyAsync())
+        {
+            return; // Exit if customers already exist
+        }
 
         var passwordHasher = new PasswordHasher<Customer>();
 

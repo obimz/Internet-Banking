@@ -30,6 +30,8 @@ builder.Services.AddScoped<IPasswordHasher<Customer>, PasswordHasher<Customer>>(
 
 builder.Services.AddScoped<IAccountStatementService, AccountStatementService>();//Registers the AccountStatementService with the dependency injection container.
 
+builder.Services.AddScoped<IAccountService, AccountService>();
+
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is not configured.");
 
