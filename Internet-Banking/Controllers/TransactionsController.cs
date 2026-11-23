@@ -1,6 +1,7 @@
 ﻿using Internet_Banking.Data;
 using Internet_Banking.DTOs.Trasactions;
 using Internet_Banking.Models;
+using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ namespace Internet_Banking.Controllers;
 public class TransactionsController : ControllerBase
 {
     private readonly Internet_BankingDbContext _context;
+    private readonly ITransactionService _transactionService;
 
-    public TransactionsController(Internet_BankingDbContext context)
+    public TransactionsController(Internet_BankingDbContext context, ITransactionService transactionService)
     {
         _context = context;
+        _transactionService = transactionService;
     }
 
     [HttpPost("deposit")]
@@ -122,73 +125,16 @@ public class TransactionsController : ControllerBase
             return Unauthorized();
         }
 
-        if (request.Amount <= 0)
-        {
-            return BadRequest("Transfer amount must be greater than zero.");
-        }
+        var result = await _transactionService.ExecuteInternalTransferAsync(
+            customerId,
+            request.SourceAccountId,
+            request.DestinationAccountId,
+            request.Amount,
+            request.Narration);
 
-        if (request.SourceAccountId == request.DestinationAccountId)
-        {
-            return BadRequest("Source and destination accounts cannot be the same.");
-        }
-
-        var sourceAccount = await _context.BankAccounts
-            .FirstOrDefaultAsync(a => a.CustomerId == customerId && a.Id == request.SourceAccountId);
-
-        if (sourceAccount is null)
-        {
-            return NotFound("Source account not found.");
-        }
-
-        var destinationAccount = await _context.BankAccounts
-            .FirstOrDefaultAsync(a => a.Id == request.DestinationAccountId);
-
-        if (destinationAccount is null)
-        {
-            return NotFound("Destination account not found.");
-        }
-
-        if (sourceAccount.Status != AccountStatus.Active || destinationAccount.Status != AccountStatus.Active)
-        {
-            return BadRequest("Both accounts must be active.");
-        }
-
-        if (sourceAccount.Balance < request.Amount)
-        {
-            return BadRequest("Insufficient funds in source account.");
-        }
-
-        await using var dbTransaction = await _context.Database.BeginTransactionAsync(); //Ensures that both operations are treated as a single atomic operation.
-
-        sourceAccount.Balance -= request.Amount;
-        destinationAccount.Balance += request.Amount;
-
-        var transactionReference = GenerateTransactionReference();
-
-        var transaction = new Transaction
-        {
-            TransactionReference = transactionReference,
-            TransactionType = TransactionType.InternalTransfer,
-            SourceAccountId = sourceAccount.Id,
-            DestinationAccountId = destinationAccount.Id,
-            Amount = request.Amount,
-            TransactionStatus = TransactionStatus.Successful,
-            Narration = request.Narration ?? "Internal transfer"
-        };
-
-        _context.Transactions.Add(transaction);
-
-        await _context.SaveChangesAsync();
-        await dbTransaction.CommitAsync();
-
-        return Ok(new
-        {
-            transactionReference,
-            sourceAccountId = sourceAccount.Id,
-            sourceAccountBalance = sourceAccount.Balance,
-            destinationAccountId = destinationAccount.Id,
-            destinationAccountBalance = destinationAccount.Balance
-        });
+        return result.IsSuccess
+            ? Ok(result.Data)
+            : StatusCode(result.StatusCode, result.ErrorMessage);
     }
 
     [HttpPost("domestic-transfer")]
