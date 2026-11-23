@@ -48,10 +48,6 @@ public class TokenService : ITokenService
 
         new Claim(
             ClaimTypes.Role,
-            customer.Role),
-
-        new Claim(
-            ClaimTypes.Role,
             string.IsNullOrWhiteSpace(customer.Role) ? "Customer" : customer.Role)
         };
 
