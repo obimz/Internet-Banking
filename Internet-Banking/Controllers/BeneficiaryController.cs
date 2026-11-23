@@ -78,7 +78,6 @@ public class BeneficiaryController : ControllerBase
 
         return Ok(new
         {
-            beneficiary.Id,
             beneficiary.AccountNumber,
             beneficiary.AccountName,
             beneficiary.Nickname,

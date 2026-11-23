@@ -1,9 +1,7 @@
 ﻿using Internet_Banking.Data;
-using Internet_Banking.DTOs.Accounts;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Internet_Banking.Models;
 using Microsoft.AspNetCore.Authorization;
 using Internet_Banking.Services;
 using Internet_Banking.DTOs.Trasactions;
