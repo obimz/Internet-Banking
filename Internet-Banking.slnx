@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Internet-Banking/Internet-Banking.csproj" />
+  <Project Path="InternetBankingTests/InternetBankingTests.csproj" Id="c2596ba4-4f08-488d-b726-d1505f0b1ae8" />
 </Solution>

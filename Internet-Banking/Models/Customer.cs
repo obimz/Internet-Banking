@@ -13,5 +13,7 @@ namespace Internet_Banking.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<BankAccount> BankAccounts { get; set; } = new List<BankAccount>(); //Navigation property representing the collection of bank accounts associated with the customer
+
+        public ICollection<Beneficiary> Beneficiaries { get; set; } = new List<Beneficiary>();
     }
 }

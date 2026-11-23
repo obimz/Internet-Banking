@@ -12,6 +12,8 @@ namespace Internet_Banking.Data
 
         public DbSet<Transaction> Transactions => Set<Transaction>();
 
+        public DbSet<Beneficiary> Beneficiaries => Set<Beneficiary>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BankAccount>()
@@ -70,9 +72,32 @@ namespace Internet_Banking.Data
                 .WithMany()
                 .HasForeignKey(t => t.DestinationAccountId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Beneficiary>(entity =>
+            {
+                entity.HasKey(b => b.Id);
+
+                entity.Property(b => b.AccountNumber)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
+                entity.Property(b => b.AccountName)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(b => b.Nickname)
+                    .HasMaxLength(50);
+
+                // Prevent a customer from saving the same beneficiary account number more than once
+                entity.HasIndex(b => new { b.CustomerId, b.AccountNumber })
+                    .IsUnique();
+
+                entity.HasOne(b => b.Customer)
+                    .WithMany(c => c.Beneficiaries)
+                    .HasForeignKey(b => b.CustomerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
-
-
 
     }
 }

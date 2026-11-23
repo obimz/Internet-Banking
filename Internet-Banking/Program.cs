@@ -35,6 +35,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is not configured.");
 
