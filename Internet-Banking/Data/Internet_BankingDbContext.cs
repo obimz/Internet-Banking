@@ -25,6 +25,10 @@ namespace Internet_Banking.Data
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<BankAccount>()
+                .Property(account => account.RowVersion)
+                .IsRowVersion(); //concurrency token: EF only updates the row if the value is unchanged since it was read
+
+            modelBuilder.Entity<BankAccount>()
                 .HasIndex(account => account.AccountNumber)
                 .IsUnique();
 

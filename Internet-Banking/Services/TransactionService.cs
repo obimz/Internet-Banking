@@ -77,8 +77,15 @@ public class TransactionService : ITransactionService
 
         _context.Transactions.Add(transaction);
 
-        await _context.SaveChangesAsync();
-        await dbTransaction.CommitAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+        } catch (DbUpdateConcurrencyException)
+        {
+            return new ServiceResult(false, 409, "The account was modified by another request, Please try again.");
+        }
+
 
         return new ServiceResult(true, 200, Data: new
         {

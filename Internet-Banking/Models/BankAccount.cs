@@ -16,4 +16,7 @@ public class BankAccount
     public decimal DailyTransferLimit { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Concurrency token: the database changes this value on every update, so EF can detect that the row changed since it was read.
+    public byte[] RowVersion { get; set; } = [];
 }
