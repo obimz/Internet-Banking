@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using System.Text;
 
 
 namespace Internet_Banking.Controllers;
@@ -20,15 +19,13 @@ public class AuthController : ControllerBase
 
     private readonly ITokenService _tokenService;
 
-    private readonly IConfiguration _configuration;
 
     private readonly IAccountService _accountService;
 
-    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IConfiguration configuration, IAccountService accountService, ITokenService tokenService)
+    public AuthController(Internet_BankingDbContext context, IPasswordHasher<Customer> passwordHasher, IAccountService accountService, ITokenService tokenService)
     {
         _context = context;
         _passwordHasher = passwordHasher;
-        _configuration = configuration;
         _accountService = accountService;
         _tokenService = tokenService;
     }
@@ -39,9 +36,10 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.FullName) ||
             string.IsNullOrWhiteSpace(request.Email) ||
+            string.IsNullOrWhiteSpace(request.PhoneNumber) ||
             string.IsNullOrWhiteSpace(request.Password))
         {
-            return BadRequest("Full name, email, and password are required.");
+            return BadRequest("Full name, email, phone number, and password are required.");
         }
 
         var email = request.Email.Trim().ToLowerInvariant();

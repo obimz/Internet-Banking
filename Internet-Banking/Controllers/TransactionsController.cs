@@ -39,6 +39,11 @@ public class TransactionsController : ControllerBase
             return NotFound("Account not found.");
         }
 
+        if (account.Status != AccountStatus.Active)
+        {
+            return BadRequest("Account is not active.");
+        }
+
         var transactionReference = GenerateTransactionReference();
 
         var transaction = new Transaction
@@ -80,6 +85,11 @@ public class TransactionsController : ControllerBase
         if (account is null)
         {
             return NotFound("Account not found.");
+        }
+
+        if (account.Status != AccountStatus.Active)
+        {
+            return BadRequest("Account is not active.");
         }
 
         if (account.Balance < request.Amount)
