@@ -43,7 +43,7 @@ public class TokenServiceTests
         jwt.Audiences.Should().Contain("test-audience");
         jwt.Claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == customer.Id.ToString());
         jwt.Claims.Should().Contain(c => c.Type == ClaimTypes.Email && c.Value == "ada@test.com");
-        jwt.Claims.Should().Contain(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+        jwt.Claims.Where(c => c.Type == ClaimTypes.Role).Should().ContainSingle().Which.Value.Should().Be("Admin");
     }
 
     [Theory]
