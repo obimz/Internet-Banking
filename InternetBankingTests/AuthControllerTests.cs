@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Internet_Banking.Models;
 using Internet_Banking.Services;
 using Internet_Banking.Controllers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InternetBankingTests;
@@ -18,7 +17,7 @@ public class AuthControllerTests
     private readonly IAccountService _account = A.Fake<IAccountService>();
 
     private AuthController CreateSut() =>
-        new(_db, _hasher, A.Fake<IConfiguration>(), _account, _token);
+        new(_db, _hasher, _account, _token);
 
     // Puts a customer into the in-memory database so Login/Register can find it.
     private Customer SeedCustomer(string email = "ada@test.com")
@@ -115,6 +114,21 @@ public class AuthControllerTests
         //Act: empty full name
         var result = await sut.Register(
             new RegisterRequest("", "a@b.com", "0800", "pw", AccountType.Savings));
+
+        //Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        _db.Customers.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Register_MissingPhoneNumber_ReturnsBadRequest()
+    {
+        //Arrange
+        var sut = CreateSut();
+
+        //Act: null phone number
+        var result = await sut.Register(
+            new RegisterRequest("Ada", "a@b.com", null!, "pw", AccountType.Savings));
 
         //Assert
         result.Should().BeOfType<BadRequestObjectResult>();

@@ -37,7 +37,7 @@ public class TransactionsControllerTests
     }
 
     // Creates a customer who owns one bank account, and saves both to the in-memory database.
-    private BankAccount SeedAccount(decimal balance = 1000m)
+    private BankAccount SeedAccount(decimal balance = 1000m, AccountStatus status = AccountStatus.Active)
     {
         var customer = new Customer
         {
@@ -52,7 +52,7 @@ public class TransactionsControllerTests
             CustomerId = customer.Id,
             AccountNumber = (_accountNumberSeed++).ToString(),
             Balance = balance,
-            Status = AccountStatus.Active,
+            Status = status,
             AccountType = AccountType.Savings
         };
 
@@ -150,6 +150,38 @@ public class TransactionsControllerTests
         //Assert
         result.Should().BeOfType<NotFoundObjectResult>();
         victim.Balance.Should().Be(1000m);
+        _db.Transactions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Deposit_InactiveAccount_ReturnsBadRequest_AndChangesNothing()
+    {
+        //Arrange
+        var account = SeedAccount(balance: 1000m, status: AccountStatus.Frozen);
+        var sut = CreateSut(account.CustomerId); // the owner, so ownership passes and the status check is reached
+
+        //Act
+        var result = await sut.Deposit(new DepositRequest { AccountId = account.Id, Amount = 250m });
+
+        //Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        account.Balance.Should().Be(1000m);
+        _db.Transactions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Withdraw_InactiveAccount_ReturnsBadRequest_AndChangesNothing()
+    {
+        //Arrange
+        var account = SeedAccount(balance: 1000m, status: AccountStatus.Frozen);
+        var sut = CreateSut(account.CustomerId);
+
+        //Act
+        var result = await sut.Withdraw(new WithdrawRequest { AccountId = account.Id, Amount = 400m });
+
+        //Assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        account.Balance.Should().Be(1000m);
         _db.Transactions.Should().BeEmpty();
     }
 
