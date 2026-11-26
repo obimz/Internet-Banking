@@ -14,6 +14,8 @@ namespace Internet_Banking.Data
 
         public DbSet<Beneficiary> Beneficiaries => Set<Beneficiary>();
 
+        public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BankAccount>()
@@ -100,6 +102,19 @@ namespace Internet_Banking.Data
                     .WithMany(c => c.Beneficiaries)
                     .HasForeignKey(b => b.CustomerId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<IdempotencyRecord>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+
+                entity.Property(r => r.IdempotencyKey)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                // Prevent a customer from using the same idempotency key more than once
+                entity.HasIndex(ir => new { ir.CustomerId, ir.IdempotencyKey })
+                    .IsUnique();
             });
         }
 

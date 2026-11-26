@@ -1,5 +1,6 @@
 ﻿using Internet_Banking.Data;
 using Internet_Banking.DTOs.Trasactions;
+using Internet_Banking.Filters;
 using Internet_Banking.Models;
 using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +24,9 @@ public class TransactionsController : ControllerBase
         _transactionService = transactionService;
     }
 
+    
     [HttpPost("deposit")]
+    [Idempotent]
     public async Task<IActionResult> Deposit(DepositRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -80,6 +83,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost("withdraw")]
+    [Idempotent]
     public async Task<IActionResult> Withdraw(WithdrawRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -141,6 +145,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost("internal-transfer")]
+    [Idempotent]
     public async Task<IActionResult> TransferInternal(TransferInternalRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -163,6 +168,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost("domestic-transfer")]
+    [Idempotent]
     public async Task<IActionResult> DomesticTransfer(DomesticTransferRequest request)
     {
         var customerIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);

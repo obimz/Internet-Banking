@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Internet_Banking.Data;
+using Internet_Banking.Filters;
 using Internet_Banking.Models;
 using Internet_Banking.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -217,6 +218,7 @@ public class BeneficiaryController : ControllerBase
     }
 
     [HttpPost("transfer/{beneficiaryId:guid}")]
+    [Idempotent]
     public async Task<IActionResult> TransferToBeneficiary(
         Guid beneficiaryId, BeneficiaryTransferRequest request)
     {
