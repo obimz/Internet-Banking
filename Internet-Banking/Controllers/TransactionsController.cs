@@ -61,7 +61,15 @@ public class TransactionsController : ControllerBase
 
         _context.Transactions.Add(transaction);
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch(DbUpdateConcurrencyException)
+        {
+            return Conflict("The account was updated by another process. Please try again.");
+        }
+        
 
         return Ok(new
         {
@@ -114,7 +122,14 @@ public class TransactionsController : ControllerBase
 
         _context.Transactions.Add(transaction);
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict("The account was updated by another process. Please try again.");
+        }
 
     
         return Ok(new
@@ -201,8 +216,15 @@ public class TransactionsController : ControllerBase
 
         _context.Transactions.Add(transaction);
 
-        await _context.SaveChangesAsync();
-        await dbTransaction.CommitAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+            await dbTransaction.CommitAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict("The account was updated by another process. Please try again.");
+        }
 
         return Ok(new
         {
